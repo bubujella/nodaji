@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>인력 요청 폼</title>
+  <!-- 다음 우편번호 서비스 스크립트 (예시) -->
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #FFA500; /* 단색 주황색 배경 */
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      color: #333;
+    }
+    .form-container {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 350px;
+      padding: 15px;
+    }
+    .form-header { text-align: center; margin-bottom: 10px; }
+    .form-header h1 { font-size: 1.3rem; color: #444; margin-bottom: 5px; }
+    .form-header p { font-size: 0.8rem; color: #666; }
+    .form-group { margin-bottom: 8px; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #444; }
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group input[type="date"],
+    .form-group input[type="time"],
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: #FF4500; outline: none; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 5px; }
+    .checkbox-group label { font-weight: normal; font-size: 0.8rem; display: flex; align-items: center; gap: 3px; }
+    .btn {
+      display: inline-block;
+      background: #000; /* 검정색 버튼 */
+      color: #fff;
+      padding: 7px 15px;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .btn:hover { background: #333; }
+    .address-search-btn { background: #F39C12; margin-top: 3px; }
+    .address-search-btn:hover { background: #D17C0B; }
+    .submit-area { text-align: center; margin-top: 10px; }
+    /* 휴게시간 입력 필드 그룹 */
+    .break-group { display: flex; gap: 5px; }
+    .break-group input[type="time"] { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <div class="form-header">
+      <h1>※ 노다지 인력 요청 ※</h1>
+      <p>필요 인원을 신청하세요.</p>
+    </div>
+    <form id="work-request-form">
+      <div class="form-group">
+        <label for="requestDate">의뢰일</label>
+        <input type="date" id="requestDate" name="requestDate" />
+      </div>
+      <div class="form-group">
+        <label for="startTime">출근시간</label>
+        <input type="time" id="startTime" name="startTime" />
+      </div>
+      <div class="form-group">
+        <label for="endTime">퇴근시간</label>
+        <input type="time" id="endTime" name="endTime" />
+      </div>
+      <!-- 휴게시간 그룹 -->
+      <div class="form-group">
+        <label>휴게시간</label>
+        <div class="break-group">
+          <input type="time" id="breakStart" name="breakStart" placeholder="휴게 시작" />
+          <input type="time" id="breakEnd" name="breakEnd" placeholder="휴게 종료" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="meal">식사제공</label>
+        <select id="meal" name="meal">
+          <option value="none">없음</option>
+          <option value="lunch">점심 제공</option>
+          <option value="dinner">저녁 제공</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="workers">작업인원</label>
+        <input type="number" id="workers" name="workers" min="0" placeholder="예: 5" />
+      </div>
+      <div class="form-group">
+        <label for="workContent">작업내용</label>
+        <textarea id="workContent" name="workContent" rows="2" placeholder="작업 내용을 입력하세요"></textarea>
+      </div>
+      <!-- 회사, 사업자번호, 신청하신 분 필드 제거 -->
+      <div class="form-group">
+        <label for="contact">연락처</label>
+        <input type="text" id="contact" name="contact" placeholder="예: 010-1234-5678" />
+      </div>
+      <div class="form-group">
+        <label for="jobCategory">직종</label>
+        <select id="jobCategory" name="jobCategory">
+          <option value="">선택하세요</option>
+          <option value="가사도우미">가사도우미</option>
+          <option value="식당 전처리">식당 전처리</option>
+          <option value="요리사">요리사</option>
+          <option value="홀서빙">홀 서빙</option>
+          <option value="요양보호사">요양보호사</option>
+          <option value="설거지">설거지</option>
+          <option value="배식도우미">배식도우미</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="storeAddress">가게주소</label>
+        <input type="text" id="storeAddress" name="storeAddress" placeholder="가게주소 입력" />
+        <button type="button" class="btn address-search-btn" onclick="searchAddress()">주소 검색</button>
+      </div>
+      <div class="form-group">
+        <label>구인 상세 내용</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" name="details" value="초보가능" />초보가능</label>
+          <label><input type="checkbox" name="details" value="보건증 필수" />보건증 필수</label>
+          <label><input type="checkbox" name="details" value="자격증필수" />자격증 필수</label>
+          <label><input type="checkbox" name="details" value="경력우대" />경력 우대</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="note">유의사항</label>
+        <textarea id="note" name="note" rows="2" placeholder="작업 기간 및 시간 관련 유의사항"></textarea>
+      </div>
+      <div class="form-group">
+        <input type="checkbox" id="personalInfoAgree" name="personalInfoAgree" />
+        <label for="personalInfoAgree" class="agreement-label">개인정보 수집·이용 및 제공 동의</label>
+      </div>
+      <div class="submit-area">
+        <button type="submit" class="btn">신청</button>
+      </div>
+    </form>
+  </div>
+  <script>
+    // 주소 검색 함수 (다음 우편번호 API 활용)
+    function searchAddress() {
+      new daum.Postcode({
+        oncomplete: function(data) {
+          // 선택한 주소 데이터를 storeAddress 입력란에 설정
+          document.getElementById('storeAddress').value = data.address;
+        }
+      }).open();
+    }
+    document.getElementById('work-request-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert("신청이 완료되었습니다(예시)");
+    });
+  </script>
+</body>
+</html>
